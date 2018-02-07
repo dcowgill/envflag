@@ -1,0 +1,10 @@
+language: go
+go_import_path: github.com/dcowgill/envflag
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - tip
+
+script:
+  - go test -v ./...
