@@ -26,7 +26,7 @@ func TestPrecedence(t *testing.T) {
 		return fs, value
 	}
 	parseEnv := func(fs *flag.FlagSet, value string, set bool) {
-		vs := NewVarSet(fs, flag.ContinueOnError)
+		vs := NewVarSet(fs)
 		vs.LookupEnv = func(string) (string, bool) { return value, set }
 		must(vs.Parse())
 	}
@@ -63,7 +63,7 @@ func TestEmptyButSetEnvironment(t *testing.T) {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	value := fs.String("foo", "the default", "")
 	must(fs.Parse(nil))
-	vs := NewVarSet(fs, flag.ContinueOnError)
+	vs := NewVarSet(fs)
 	vs.LookupEnv = func(string) (string, bool) { return "", true }
 	must(vs.Parse())
 	if *value != "" {
@@ -77,7 +77,7 @@ func TestRenameFlag(t *testing.T) {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	value := fs.String("original", "", "")
 	must(fs.Parse(nil))
-	vs := NewVarSet(fs, flag.ContinueOnError)
+	vs := NewVarSet(fs)
 	vs.SetPrefix("testapp")
 	vs.RenameFlag("original", "new-and-improved")
 	vs.LookupEnv = func(key string) (string, bool) {

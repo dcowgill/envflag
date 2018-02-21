@@ -44,10 +44,9 @@ the following rules:
 package envflag
 
 import (
-	"bytes"
+	"strings"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 )
 
@@ -63,19 +62,11 @@ type VarSet struct {
 	fs            *flag.FlagSet
 	prefix        string
 	renames       map[string]string
-	errorHandling flag.ErrorHandling
-	output        io.Writer
 }
 
 // NewVarSet creates a new VarSet with the specified flag set and error handling property.
-func NewVarSet(fs *flag.FlagSet, errorHandling flag.ErrorHandling) *VarSet {
-	return &VarSet{fs: fs, errorHandling: errorHandling}
-}
-
-// SetOutput sets the destination for usage and error messages.
-// If output is nil, os.Stderr is used.
-func (vs *VarSet) SetOutput(output io.Writer) {
-	vs.output = output
+func NewVarSet(fs *flag.FlagSet) *VarSet {
+	return &VarSet{fs: fs}
 }
 
 // SetPrefix specifies a string to prepend to all environment variable keys. An
@@ -93,14 +84,6 @@ func (vs *VarSet) RenameFlag(old, new string) {
 	vs.renames[old] = new
 }
 
-// Returns the destination for usage and error messages.
-func (vs *VarSet) out() io.Writer {
-	if vs.output == nil {
-		return os.Stderr
-	}
-	return vs.output
-}
-
 // Parse sets the value of flags that were not provided on the command-line but
 // are set in the environment.
 func (vs *VarSet) Parse() error {
@@ -113,7 +96,7 @@ func (vs *VarSet) Parse() error {
 	})
 	for _, f := range flags {
 		if err := vs.parseOne(f.Name, f.Value); err != nil {
-			switch vs.errorHandling {
+			switch vs.fs.ErrorHandling() {
 			case flag.ContinueOnError:
 				return err
 			case flag.ExitOnError:
@@ -156,7 +139,7 @@ func (vs *VarSet) lookupEnv(key string) (string, bool) {
 
 func (vs *VarSet) failf(format string, args ...interface{}) error {
 	err := fmt.Errorf(format, args...)
-	fmt.Fprintln(vs.out(), err)
+	fmt.Fprintln(vs.fs.Output(), err)
 	vs.fs.Usage()
 	return err
 }
@@ -164,7 +147,7 @@ func (vs *VarSet) failf(format string, args ...interface{}) error {
 // CommandLine wraps flag.CommandLine, the default set of command-line flags.
 // The top-level functions, such as SetPrefix and Parse, are wrappers for the
 // methods of CommandLine.
-var CommandLine = NewVarSet(flag.CommandLine, flag.ExitOnError)
+var CommandLine = NewVarSet(flag.CommandLine)
 
 // SetPrefix specifies a string to prepend to all environment variable keys. An
 // underscore is automatically inserted between the prefix and variable key.
@@ -186,29 +169,25 @@ func Parse() {
 
 // Transforms a flag name, plus an optional prefix, into an environment key.
 func rewrite(prefix, name string) string {
-	// Post Go 1.10, replace bytes.Buffer with:
-	//
-	//		buf := strings.Builder{}
-	//		buf.Grow(len(prefix) + len(name) + 1)
-	//
-	buf := bytes.NewBuffer(make([]byte, 0, len(prefix)+len(name)+1))
+	b := strings.Builder{}
+	b.Grow(len(prefix) + len(name) + 1)
 	if prefix != "" {
-		rewriteInto(buf, prefix)
-		buf.WriteByte('_')
+		rewriteInto(&b, prefix)
+		b.WriteByte('_')
 	}
-	rewriteInto(buf, name)
-	return buf.String()
+	rewriteInto(&b, name)
+	return b.String()
 }
 
-func rewriteInto(buf *bytes.Buffer, s string) {
+func rewriteInto(b *strings.Builder, s string) {
 	for _, ch := range s {
 		switch {
 		case ch >= 'A' && ch <= 'Z':
 		case ch >= 'a' && ch <= 'z':
 			ch = 'A' + ch - 'a'
 		case ch >= '0' && ch <= '9':
-			if buf.Len() == 0 {
-				buf.WriteByte('_') // cannot begin with a digit
+			if b.Len() == 0 {
+				b.WriteByte('_') // cannot begin with a digit
 			}
 		case ch == '_':
 		case ch == '-':
@@ -216,6 +195,6 @@ func rewriteInto(buf *bytes.Buffer, s string) {
 		default:
 			continue // character not permitted
 		}
-		buf.WriteByte(byte(ch))
+		b.WriteByte(byte(ch))
 	}
 }
