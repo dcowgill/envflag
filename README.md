@@ -46,7 +46,7 @@ func main() {
 
 	// Normally this would happen outside the program.
 	os.Setenv("MYAPP_LISTEN_ADDR", ":9999")
-	os.Setenv("MYADD_TIMEOUT", "42")
+	os.Setenv("MYAPP_TIMEOUT", "42")
 
 	vs := envflag.NewVarSet(fs)
 	vs.SetPrefix("myapp")
