@@ -1,4 +1,4 @@
-# envflag [![Travis-CI](https://travis-ci.org/dcowgill/envflag.svg)](https://travis-ci.org/dcowgill/envflag) [![GoDoc](https://godoc.org/github.com/dcowgill/envflag?status.svg)](http://godoc.org/github.com/dcowgill/envflag) [![Report card](https://goreportcard.com/badge/github.com/dcowgill/envflag)](https://goreportcard.com/report/github.com/dcowgill/envflag)
+# envflag [![GoDoc](https://godoc.org/github.com/dcowgill/envflag?status.svg)](http://godoc.org/github.com/dcowgill/envflag) [![Report card](https://goreportcard.com/badge/github.com/dcowgill/envflag)](https://goreportcard.com/report/github.com/dcowgill/envflag)
 
 Minimalist approach to wiring up the standard flag package to the environment.
 
